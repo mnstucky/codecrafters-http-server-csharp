@@ -5,6 +5,9 @@ using System.Net.Sockets;
 Console.WriteLine("Logs from your program will appear here!");
 
 // Uncomment this block to pass the first stage
-TcpListener server = new TcpListener(IPAddress.Any, 4221);
+TcpListener server = new(IPAddress.Any, 4221);
 server.Start();
-server.AcceptTcpClient();
+var client = server.AcceptTcpClient();
+var stream = client.GetStream();
+var message = System.Text.Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\n\r\n");
+stream.Write(message, 0, message.Length);
