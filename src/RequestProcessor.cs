@@ -2,11 +2,11 @@ using System.Net.Sockets;
 
 public static class RequestProcessor
 {
-    public static async Task Process(TcpClient client)
+    public static Task Process(TcpClient client)
     {
         using var stream = client.GetStream();
         var requestBuffer = new byte[1024];
-        await stream.ReadAsync(requestBuffer);
+        stream.Read(requestBuffer);
         var request = System.Text.Encoding.UTF8.GetString(requestBuffer)
             .Split("\r\n");
         var requestLine = request.FirstOrDefault();
@@ -47,5 +47,6 @@ public static class RequestProcessor
         };
         var messageBytes = System.Text.Encoding.ASCII.GetBytes(message);
         stream.Write(messageBytes, 0, messageBytes.Length);
+        return Task.CompletedTask;
     }
 }
