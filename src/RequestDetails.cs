@@ -1,0 +1,1 @@
+public record RequestDetails(HttpMethods HttpMethods, string[]? Path, Dictionary<string, string> Headers);
