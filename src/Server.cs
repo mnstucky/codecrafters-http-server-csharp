@@ -9,7 +9,7 @@ try
     while (true)
     {
         using var client = await server.AcceptTcpClientAsync();
-        Task.Run(() =>
+        Task.Run(async () =>
         {
             using var stream = client.GetStream();
             var requestBuffer = new byte[1024];
