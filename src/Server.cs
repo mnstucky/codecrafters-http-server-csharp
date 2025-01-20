@@ -9,8 +9,7 @@ try
     while (true)
     {
         using var client = await server.AcceptTcpClientAsync();
-        using var stream = client.GetStream();
-        await RequestProcessor.Process(stream);
+        await RequestProcessor.Process(client);
     }
 }
 finally

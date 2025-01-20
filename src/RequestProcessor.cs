@@ -1,7 +1,10 @@
+using System.Net.Sockets;
+
 public static class RequestProcessor
 {
-    public static async Task Process(Stream stream)
+    public static async Task Process(TcpClient client)
     {
+        using var stream = client.GetStream();
         var requestBuffer = new byte[1024];
         await stream.ReadAsync(requestBuffer);
         var request = System.Text.Encoding.UTF8.GetString(requestBuffer)
