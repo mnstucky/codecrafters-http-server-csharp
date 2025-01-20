@@ -9,7 +9,7 @@ try
     while (true)
     {
         using var client = await server.AcceptTcpClientAsync();
-        await RequestProcessor.Process(client);
+        Task.Run(() => RequestProcessor.Process(client));
     }
 }
 finally
