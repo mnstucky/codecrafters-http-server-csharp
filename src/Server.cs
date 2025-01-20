@@ -8,8 +8,8 @@ try
     server.Start();
     while (true)
     {
-        var client = server.AcceptTcpClient();
-        Task.Run(() => HandleRequest(client));
+        var client = await server.AcceptTcpClientAsync();
+        _ = HandleRequestAsync(client);
     }
 }
 finally
@@ -17,11 +17,11 @@ finally
     server.Dispose();
 }
 
-void HandleRequest(TcpClient client)
+async Task HandleRequestAsync(TcpClient client)
 {
     using var stream = client.GetStream();
     var requestBuffer = new byte[1024];
-    stream.Read(requestBuffer);
+    await stream.ReadAsync(requestBuffer);
     var request = System.Text.Encoding.UTF8.GetString(requestBuffer)
         .Split("\r\n");
     var requestLine = request.FirstOrDefault();
