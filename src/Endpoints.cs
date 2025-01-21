@@ -44,13 +44,13 @@ public static class Endpoints
     {
         if (request.Path is null)
         {
-            return Response500;
+            return Response500 + HeaderEnd;
         }
         var directory = CommandLineUtilities.GetFilesDirectory();
         var file = request.Path.Skip(1).FirstOrDefault();
         if (!File.Exists(directory + file))
         {
-            return Response404;
+            return Response404 + HeaderEnd;
         }
         try
         {
@@ -64,7 +64,7 @@ public static class Endpoints
         catch (Exception ex)
         {
             Console.WriteLine(ex);
-            return Response500;
+            return Response500 + HeaderEnd;
         }
     }
 }
