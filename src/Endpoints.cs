@@ -59,7 +59,7 @@ public static class Endpoints
             $"Content-Type: application/octet-stream\r\n" +
             $"Content-Length: {bytes.Length}\r\n" +
             HeaderEnd +
-            System.Text.Encoding.UTF8.GetChars(bytes);
+            string.Join("", System.Text.Encoding.UTF8.GetChars(bytes));
         }
         catch (Exception ex)
         {
