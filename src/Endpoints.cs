@@ -38,14 +38,19 @@ public static class Endpoints
 
     public static string GetFiles(RequestDetails request)
     {
+        if (request.Path is null)
+        {
+            return Response500;
+        }
         var directory = CommandLineUtilities.GetFilesDirectory();
-        if (!File.Exists(directory))
+        var file = request.Path.Skip(1).FirstOrDefault();
+        if (!File.Exists(directory + file))
         {
             return Response404;
         }
         try
         {
-            var bytes = File.ReadAllBytes(directory);
+            var bytes = File.ReadAllBytes(directory + file);
             return Response200 +
             $"Content-Type: application/octet-stream\r\n" +
             $"Content-Length: {bytes.Length}\r\n\r\n" +
