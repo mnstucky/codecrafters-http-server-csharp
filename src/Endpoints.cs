@@ -1,19 +1,21 @@
 public static class Endpoints
 {
-    const string Response200 = "HTTP/1.1 200 OK\r\n\r\n";
+    const string Response200 = "HTTP/1.1 200 OK\r\n";
 
-    const string Response404 = "HTTP/1.1 404 Not Found\r\n\r\n";
+    const string Response404 = "HTTP/1.1 404 Not Found\r\n";
 
-    const string Response500 = "HTTP/1.1 500 Internal Server Error\n\r\n";
+    const string Response500 = "HTTP/1.1 500 Internal Server Error\r\n";
+
+    const string HeaderEnd = "\r\n";
 
     public static string GetNotFound()
     {
-        return Response404;
+        return Response404 + HeaderEnd;
     }
 
     public static string GetEmptyOk()
     {
-        return Response200;
+        return Response200 + HeaderEnd;
     }
 
     public static string GetEcho(RequestDetails request)
@@ -24,7 +26,8 @@ public static class Endpoints
         }
         return Response200 +
             $"Content-Type: text/plain\r\n" +
-            $"Content-Length: {string.Join("/", request.Path.Skip(1)).Length}\r\n\r\n" +
+            $"Content-Length: {string.Join("/", request.Path.Skip(1)).Length}\r\n" +
+            HeaderEnd +
             string.Join("/", request.Path.Skip(1));
     }
 
@@ -32,7 +35,8 @@ public static class Endpoints
     {
         return Response200 +
             $"Content-Type: text/plain\r\n" +
-            $"Content-Length: {request.Headers.GetValueOrDefault("User-Agent")?.Length ?? 0}\r\n\r\n" +
+            $"Content-Length: {request.Headers.GetValueOrDefault("User-Agent")?.Length ?? 0}\r\n" +
+            HeaderEnd +
             request.Headers.GetValueOrDefault("User-Agent");
     }
 
@@ -53,8 +57,9 @@ public static class Endpoints
             var bytes = File.ReadAllBytes(directory + file);
             return Response200 +
             $"Content-Type: application/octet-stream\r\n" +
-            $"Content-Length: {bytes.Length}\r\n\r\n" +
-            bytes;
+            $"Content-Length: {bytes.Length}\r\n" +
+            HeaderEnd +
+            System.Text.Encoding.UTF8.GetChars(bytes);
         }
         catch (Exception ex)
         {
