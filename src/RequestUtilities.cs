@@ -1,5 +1,34 @@
+using System.Net.Sockets;
+
 public static class RequestUtilities
 {
+    public static async Task HandleRequestAsync(TcpClient client)
+    {
+        Console.WriteLine("Processing Request.");
+        using var stream = client.GetStream();
+        var requestBuffer = new byte[1024];
+        await stream.ReadAsync(requestBuffer);
+        var requestString = System.Text.Encoding.UTF8.GetString(requestBuffer);
+        var request = ParseRequest(requestString);
+
+        if (request.HttpMethods == HttpMethods.Invalid || request.Path is null)
+        {
+            var badRequest = System.Text.Encoding.ASCII.GetBytes("HTTP/1.1 400 Bad Request\r\n\r\n");
+            stream.Write(badRequest, 0, badRequest.Length);
+        }
+
+        var message = request.Path?.FirstOrDefault() switch
+        {
+            null => Endpoints.GetEmptyOk(),
+            "echo" => Endpoints.GetEcho(request),
+            "user-agent" => Endpoints.GetUserAgent(request),
+            "files" => Endpoints.GetFiles(request),
+            _ => Endpoints.GetNotFound()
+        };
+        var messageBytes = System.Text.Encoding.ASCII.GetBytes(message);
+        stream.Write(messageBytes, 0, messageBytes.Length);
+    }
+
     public static RequestDetails ParseRequest(string requestString)
     {
         var request = requestString.Split("\r\n");
