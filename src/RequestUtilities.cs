@@ -56,7 +56,7 @@ public static class RequestUtilities
         var bodyIsNext = false;
         foreach (var header in request.Skip(1))
         {
-            if (header == Endpoints.HeaderEnd)
+            if (header == "")
             {
                 bodyIsNext = true;
                 continue;

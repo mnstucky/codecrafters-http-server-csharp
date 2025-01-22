@@ -80,11 +80,17 @@ public static class Endpoints
         }
         var directory = CommandLineUtilities.GetFilesDirectory();
         var file = request.Path.Skip(1).FirstOrDefault();
-        if (File.Exists(directory + file))
+        if (File.Exists(directory + file) || request.Body is null)
         {
-            return Response404 + HeaderEnd;
+            return Response400 + HeaderEnd;
         }
-        File.WriteAllText(directory + file, request.Body);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(request.Body);
+        if (!request.Headers.TryGetValue("Content-Length", out var byteLengthString)
+            || !int.TryParse(byteLengthString, out var byteLength))
+        {
+            return Response400 + HeaderEnd;
+        }
+        File.WriteAllBytes(directory + file, bytes[..byteLength]);
         return Response201 + HeaderEnd;
     }
 }
