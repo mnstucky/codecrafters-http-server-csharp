@@ -1,12 +1,16 @@
 public static class Endpoints
 {
-    const string Response200 = "HTTP/1.1 200 OK\r\n";
+    public const string Response200 = "HTTP/1.1 200 OK\r\n";
 
-    const string Response404 = "HTTP/1.1 404 Not Found\r\n";
+    public const string Response201 = "HTTP/1.1 201 Created\r\n";
 
-    const string Response500 = "HTTP/1.1 500 Internal Server Error\r\n";
+    public const string Response400 = "HTTP/1.1 400 Bad Request\r\n";
 
-    const string HeaderEnd = "\r\n";
+    public const string Response404 = "HTTP/1.1 404 Not Found\r\n";
+
+    public const string Response500 = "HTTP/1.1 500 Internal Server Error\r\n";
+
+    public const string HeaderEnd = "\r\n";
 
     public static string GetNotFound()
     {
@@ -66,5 +70,21 @@ public static class Endpoints
             Console.WriteLine(ex);
             return Response500 + HeaderEnd;
         }
+    }
+
+    public static string AddFiles(RequestDetails request)
+    {
+        if (request.Path is null)
+        {
+            return Response500 + HeaderEnd;
+        }
+        var directory = CommandLineUtilities.GetFilesDirectory();
+        var file = request.Path.Skip(1).FirstOrDefault();
+        if (File.Exists(directory + file))
+        {
+            return Response404 + HeaderEnd;
+        }
+        File.WriteAllText(directory + file, request.Body);
+        return Response201 + HeaderEnd;
     }
 }

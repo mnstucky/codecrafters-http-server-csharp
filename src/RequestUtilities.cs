@@ -13,7 +13,7 @@ public static class RequestUtilities
 
         if (request.HttpMethods == HttpMethods.Invalid || request.Path is null)
         {
-            var badRequest = System.Text.Encoding.ASCII.GetBytes("HTTP/1.1 400 Bad Request\r\n\r\n");
+            var badRequest = System.Text.Encoding.ASCII.GetBytes(Endpoints.Response400 + Endpoints.HeaderEnd);
             stream.Write(badRequest, 0, badRequest.Length);
         }
 
@@ -22,7 +22,14 @@ public static class RequestUtilities
             null => Endpoints.GetEmptyOk(),
             "echo" => Endpoints.GetEcho(request),
             "user-agent" => Endpoints.GetUserAgent(request),
-            "files" => Endpoints.GetFiles(request),
+            "files" =>
+                request.HttpMethods switch
+                {
+                    HttpMethods.GET => Endpoints.GetFiles(request),
+                    HttpMethods.POST => Endpoints.AddFiles(request),
+                    _ => Endpoints.Response400 + Endpoints.HeaderEnd
+                }
+            ,
             _ => Endpoints.GetNotFound()
         };
         var messageBytes = System.Text.Encoding.ASCII.GetBytes(message);
@@ -38,14 +45,27 @@ public static class RequestUtilities
         var httpMethod = httpMethodString switch
         {
             "GET" => HttpMethods.GET,
+            "POST" => HttpMethods.POST,
             _ => HttpMethods.Invalid
         };
         var requestTarget = requestLineParts?.Skip(1)
             .FirstOrDefault()?
             .Split("/", StringSplitOptions.RemoveEmptyEntries);
         var headers = new Dictionary<string, string>();
+        var body = "";
+        var bodyIsNext = false;
         foreach (var header in request.Skip(1))
         {
+            if (header == Endpoints.HeaderEnd)
+            {
+                bodyIsNext = true;
+                continue;
+            }
+            if (bodyIsNext)
+            {
+                body = header;
+                continue;
+            }
             if (!header.Contains(": "))
             {
                 continue;
@@ -53,6 +73,6 @@ public static class RequestUtilities
             headers.Add(header[..header.IndexOf(':')], header[(header.IndexOf(':') + 2)..]);
         }
 
-        return new RequestDetails(httpMethod, requestTarget, headers);
+        return new RequestDetails(httpMethod, requestTarget, headers, body);
     }
 }

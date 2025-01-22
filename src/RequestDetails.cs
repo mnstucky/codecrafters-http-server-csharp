@@ -1,1 +1,1 @@
-public record RequestDetails(HttpMethods HttpMethods, string[]? Path, Dictionary<string, string> Headers);
+public record RequestDetails(HttpMethods HttpMethods, string[]? Path, Dictionary<string, string> Headers, string? Body);
