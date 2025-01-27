@@ -30,6 +30,7 @@ public static class Endpoints
         }
         return Response200 +
             $"Content-Type: text/plain\r\n" +
+            (request.AcceptsGzip ? "Content-Encoding: gzip\r\n" : "") +
             $"Content-Length: {string.Join("/", request.Path.Skip(1)).Length}\r\n" +
             HeaderEnd +
             string.Join("/", request.Path.Skip(1));
