@@ -1,4 +1,5 @@
 using System.Net.Sockets;
+using System.Text;
 
 public static class RequestUtilities
 {
@@ -27,13 +28,12 @@ public static class RequestUtilities
                 {
                     HttpMethods.GET => Endpoints.GetFiles(request),
                     HttpMethods.POST => Endpoints.AddFiles(request),
-                    _ => Endpoints.Response400 + Endpoints.HeaderEnd
+                    _ => Encoding.UTF8.GetBytes(Endpoints.Response400 + Endpoints.HeaderEnd)
                 }
             ,
             _ => Endpoints.GetNotFound()
         };
-        var messageBytes = System.Text.Encoding.ASCII.GetBytes(message);
-        stream.Write(messageBytes, 0, messageBytes.Length);
+        stream.Write(message, 0, message.Length);
     }
 
     public static RequestDetails ParseRequest(string requestString)

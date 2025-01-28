@@ -1,3 +1,6 @@
+using System.IO.Compression;
+using System.Text;
+
 public static class Endpoints
 {
     public const string Response200 = "HTTP/1.1 200 OK\r\n";
@@ -12,86 +15,99 @@ public static class Endpoints
 
     public const string HeaderEnd = "\r\n";
 
-    public static string GetNotFound()
+    public static byte[] GetNotFound()
     {
-        return Response404 + HeaderEnd;
+        return Encoding.UTF8.GetBytes(Response404 + HeaderEnd);
     }
 
-    public static string GetEmptyOk()
+    public static byte[] GetEmptyOk()
     {
-        return Response200 + HeaderEnd;
+        return Encoding.UTF8.GetBytes(Response200 + HeaderEnd);
     }
 
-    public static string GetEcho(RequestDetails request)
+    public static byte[] GetEcho(RequestDetails request)
     {
         if (request.Path is null)
         {
             return GetEmptyOk();
         }
-        return Response200 +
+        var body = Encoding.UTF8.GetBytes(string.Join("/", request.Path.Skip(1)));
+        if (request.AcceptsGzip)
+        {
+            using var outputStream = new MemoryStream();
+            using (var gzipStream = new GZipStream(outputStream, CompressionMode.Compress))
+            {
+                gzipStream.Write(body, 0, body.Length);
+            }
+            body = outputStream.ToArray();
+        }
+        var header = Encoding.UTF8.GetBytes(Response200 +
             $"Content-Type: text/plain\r\n" +
             (request.AcceptsGzip ? "Content-Encoding: gzip\r\n" : "") +
-            $"Content-Length: {string.Join("/", request.Path.Skip(1)).Length}\r\n" +
-            HeaderEnd +
-            string.Join("/", request.Path.Skip(1));
+            $"Content-Length: {body?.Length ?? 0}\r\n" +
+            HeaderEnd);
+        return [.. header, .. body ?? []];
     }
 
-    public static string GetUserAgent(RequestDetails request)
+    public static byte[] GetUserAgent(RequestDetails request)
     {
-        return Response200 +
+        return Encoding.UTF8.GetBytes(Response200 +
             $"Content-Type: text/plain\r\n" +
             $"Content-Length: {request.Headers.GetValueOrDefault("User-Agent")?.Length ?? 0}\r\n" +
             HeaderEnd +
-            request.Headers.GetValueOrDefault("User-Agent");
+            request.Headers.GetValueOrDefault("User-Agent"));
     }
 
-    public static string GetFiles(RequestDetails request)
+    public static byte[] GetFiles(RequestDetails request)
     {
         if (request.Path is null)
         {
-            return Response500 + HeaderEnd;
+            return Encoding.UTF8.GetBytes(Response500 + HeaderEnd);
         }
         var directory = CommandLineUtilities.GetFilesDirectory();
         var file = request.Path.Skip(1).FirstOrDefault();
         if (!File.Exists(directory + file))
         {
-            return Response404 + HeaderEnd;
+            return Encoding.UTF8.GetBytes(Response404 + HeaderEnd);
         }
         try
         {
             var bytes = File.ReadAllBytes(directory + file);
-            return Response200 +
-            $"Content-Type: application/octet-stream\r\n" +
-            $"Content-Length: {bytes.Length}\r\n" +
-            HeaderEnd +
-            string.Join("", System.Text.Encoding.UTF8.GetChars(bytes));
+            return
+            [
+                .. Encoding.UTF8.GetBytes(Response200 +
+                            $"Content-Type: application/octet-stream\r\n" +
+                            $"Content-Length: {bytes.Length}\r\n" +
+                            HeaderEnd),
+                .. bytes,
+            ];
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex);
-            return Response500 + HeaderEnd;
+            return Encoding.UTF8.GetBytes(Response500 + HeaderEnd);
         }
     }
 
-    public static string AddFiles(RequestDetails request)
+    public static byte[] AddFiles(RequestDetails request)
     {
         if (request.Path is null)
         {
-            return Response500 + HeaderEnd;
+            return Encoding.UTF8.GetBytes(Response500 + HeaderEnd);
         }
         var directory = CommandLineUtilities.GetFilesDirectory();
         var file = request.Path.Skip(1).FirstOrDefault();
         if (File.Exists(directory + file) || request.Body is null)
         {
-            return Response400 + HeaderEnd;
+            return Encoding.UTF8.GetBytes(Response400 + HeaderEnd);
         }
-        var bytes = System.Text.Encoding.UTF8.GetBytes(request.Body);
+        var bytes = Encoding.UTF8.GetBytes(request.Body);
         if (!request.Headers.TryGetValue("Content-Length", out var byteLengthString)
             || !int.TryParse(byteLengthString, out var byteLength))
         {
-            return Response400 + HeaderEnd;
+            return Encoding.UTF8.GetBytes(Response400 + HeaderEnd);
         }
         File.WriteAllBytes(directory + file, bytes[..byteLength]);
-        return Response201 + HeaderEnd;
+        return Encoding.UTF8.GetBytes(Response201 + HeaderEnd);
     }
 }
